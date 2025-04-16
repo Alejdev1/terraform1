@@ -17,6 +17,14 @@ jobs:
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: '1.5.4'
+    - name: Run Terraform Tests with LocalStack
+      uses: dhollerbach/actions.terraform-tests-with-localstack@v1
+      with:
+        run-formatter: true
+        run-linter: true
+        run-security-scanner: true
+        run-apply: true
+        terraform-version: 1.11.0
 
     - name: Validate Terraform configuration
       env:
