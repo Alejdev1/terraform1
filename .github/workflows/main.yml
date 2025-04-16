@@ -1,33 +1,26 @@
-name: Validate Terraform Configuration
-
-on:
-  push:
-    branches:
-      - main 
-
+name: terraform-localstack
+run-name: Terraform Localstack Testing
+on: [push]
 jobs:
-  validate-terraform:
+  terraform-localstack-configuration:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: '1.5.4'
-    - name: Run Terraform Tests with LocalStack
-      uses: dhollerbach/actions.terraform-tests-with-localstack@v1
-      with:
-        run-formatter: true
-        run-linter: true
-        run-security-scanner: true
-        run-apply: true
-        terraform-version: 1.11.0
-
-    - name: Validate Terraform configuration
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: terraform validate
+    - uses: actions/checkout@v4
+    - name: Install Terraform
+      run: |
+        wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+        sudo apt-get update && sudo apt-get install terraform
+    - name: Install LocalStack CLI and tflocal
+      run: |
+        pip install localstack-client
+        pip install terraform-local
+    - name: Start LocalStack
+      run: |
+        localstack start --docker
+    - name: Terraform Plan
+      run: |
+        tflocal init
+    - name: Terraform Apply
+      run: |
+        tflocal validate
