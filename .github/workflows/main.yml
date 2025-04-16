@@ -1,4 +1,4 @@
-name: Validate Terraform Configuration with LocalStack
+name: Validate
 
 on:
   push:
