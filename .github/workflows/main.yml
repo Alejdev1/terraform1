@@ -1,26 +1,44 @@
-name: terraform-localstack
-run-name: Terraform Localstack Testing
-on: [push]
+name: Validate Terraform Configuration with LocalStack
+
+on:
+  push:
+    branches:
+      - main  # Cambia 'main' por la rama que desees
+
 jobs:
-  terraform-localstack-configuration:
+  validate-terraform:
     runs-on: ubuntu-latest
+
+    services:
+      localstack:
+        image: localstack/localstack
+        env:
+          SERVICES: s3,sqs,sns
+          DEFAULT_REGION: us-east-1
+          PORT_WEB_UI: 8080
+        ports:
+          - 4566:4566
+          - 8080:8080
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Install Terraform
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: '1.0.0'  # Cambia la versión de Terraform si es necesario
+
+    - name: Configure AWS credentials for LocalStack
       run: |
-        wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-        sudo apt-get update && sudo apt-get install terraform
-    - name: Install LocalStack CLI and tflocal
+        echo "[default]" >> ~/.aws/credentials
+        echo "aws_access_key_id=test" >> ~/.aws/credentials
+        echo "aws_secret_access_key=test" >> ~/.aws/credentials
+        echo "[default]" >> ~/.aws/config
+        echo "region=us-east-1" >> ~/.aws/config
+        echo "output=json" >> ~/.aws/config
+
+    - name: Validate Terraform configuration
       run: |
-        pip install localstack-client
-        pip install terraform-local
-    - name: Start LocalStack
-      run: |
-        localstack start --docker
-    - name: Terraform Plan
-      run: |
-        tflocal init
-    - name: Terraform Apply
-      run: |
-        tflocal validate
+        terraform init
+        terraform validate
