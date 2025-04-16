@@ -3,7 +3,7 @@ name: Validate Terraform Configuration with LocalStack
 on:
   push:
     branches:
-      - main  # Cambia 'main' por la rama que desees
+      - main
 
 jobs:
   validate-terraform:
@@ -27,7 +27,16 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
       with:
-        terraform_version: '1.0.0'  # Cambia la versión de Terraform si es necesario
+        terraform_version: '1.0.0'
+    - name: Configure AWS credentials for LocalStack
+      run: |
+        mkdir -p ~/.aws  # Ensure the directory exists
+        echo "[default]" >> ~/.aws/credentials
+        echo "aws_access_key_id=test" >> ~/.aws/credentials
+        echo "aws_secret_access_key=test" >> ~/.aws/credentials
+        echo "[default]" >> ~/.aws/config
+        echo "region=us-east-1" >> ~/.aws/config
+        echo "output=json" >> ~/.aws/config   
 
     - name: Configure AWS credentials for LocalStack
       run: |
